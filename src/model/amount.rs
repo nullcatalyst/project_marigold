@@ -3,21 +3,11 @@ use std::{
     ops::{Add, Neg, Sub},
 };
 
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
+
 // A value that will be used to represent the amount of a currency.
 // A currency amount should _never_ be represented as a floating point number, due to potentially accumulating rounding errors.
-#[derive(
-    Default,
-    Debug,
-    Clone,
-    Copy,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    Hash,
-    serde::Serialize,
-    serde::Deserialize,
-)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Amount(i64);
 
 impl Amount {
@@ -67,10 +57,6 @@ impl Amount {
         // i64::max() == 9,223,372,036,854,775,807 (19 characters)
         // 19 + 1 (dot) + 1 (negative sign) = 21
         let mut s = String::with_capacity(21);
-        if self.0 < 0 {
-            s.push('-');
-        }
-
         let (whole, frac) = (self.0 / 10000, self.0 % 10000);
         s.push_str(&whole.to_string());
         s.push('.');
@@ -86,10 +72,23 @@ impl Display for Amount {
     }
 }
 
-pub struct AmountOpError {
-    pub lhs: Amount,
-    pub rhs: Option<Amount>,
-    pub op: &'static str,
+impl<'de> Deserialize<'de> for Amount {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        Amount::from_str(&s).ok_or_else(|| serde::de::Error::custom("invalid amount"))
+    }
+}
+
+impl Serialize for Amount {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_str(&self.to_string())
+    }
 }
 
 impl Neg for Amount {
@@ -138,6 +137,13 @@ impl Sub<Amount> for Amount {
             })
         }
     }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct AmountOpError {
+    pub lhs: Amount,
+    pub rhs: Option<Amount>,
+    pub op: &'static str,
 }
 
 #[cfg(test)]

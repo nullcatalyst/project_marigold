@@ -1,6 +1,4 @@
-use crate::AmountOpError;
-
-use super::{Amount, Event};
+use crate::model::{Account, Amount, AmountOpError, Event};
 
 #[derive(Default, Debug, Clone, Copy)]
 pub struct Transaction {
@@ -31,20 +29,38 @@ impl Transaction {
         self.chargebacked
     }
 
-    pub fn apply(&mut self, ev: Event) -> Result<(), AmountOpError> {
+    pub fn apply(&mut self, ev: Event, account: &mut Account) -> Result<(), AmountOpError> {
         match ev {
             Event::Deposit { amount, .. } => {
-                self.amount = Some(amount);
+                // This breaks our assumption that this isn't an externally facing service, and that
+                // all of the input is valid.
+                if self.amount.is_some() {
+                    panic!("Transaction already has an amount");
+                }
+
+                let new_amount = amount;
+                account.deposit(amount)?;
+
+                self.amount = Some(new_amount);
             }
             Event::Withdrawal { amount, .. } => {
-                self.amount = match -amount {
-                    Ok(value) => Some(value),
-                    Err(err) => return Err(err),
-                };
+                // This breaks our assumption that this isn't an externally facing service, and that
+                // all of the input is valid.
+                if self.amount.is_some() {
+                    panic!("Transaction already has an amount");
+                }
+
+                let new_amount = (-amount)?;
+                account.withdraw(amount)?;
+
+                self.amount = Some(new_amount);
             }
             Event::Dispute { .. } => self.disputed = true,
             Event::Resolve { .. } => self.resolved = true,
-            Event::Chargeback { .. } => self.chargebacked = true,
+            Event::Chargeback { .. } => {
+                self.chargebacked = true;
+                account.lock();
+            }
         }
 
         Ok(())

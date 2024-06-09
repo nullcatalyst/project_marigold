@@ -1,4 +1,4 @@
-use crate::{Account, AmountOpError, ClientId, Event, Transaction, TransactionId};
+use crate::{Account, AmountOpError, ClientId, Event, Output, Transaction, TransactionId};
 use std::{
     collections::HashMap,
     fmt::{Display, Formatter, Result as FmtResult},
@@ -29,6 +29,10 @@ impl Shard {
         self.transactions.get(&tx).copied()
     }
 
+    pub fn errors(&self) -> &[ShardError] {
+        &self.errors
+    }
+
     pub fn push_event(&mut self, event: Event) {
         let client_id = event.client();
         let tx_id = event.transaction();
@@ -46,6 +50,19 @@ impl Shard {
 
     pub fn push_error(&mut self, err: ShardError) {
         self.errors.push(err);
+    }
+
+    pub fn generate_output(&self) -> Vec<Output> {
+        self.accounts
+            .iter()
+            .map(|(client, account)| Output {
+                client: *client,
+                available: account.available(),
+                held: account.held(),
+                total: account.total(),
+                locked: account.is_locked(),
+            })
+            .collect()
     }
 }
 

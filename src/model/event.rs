@@ -1,4 +1,5 @@
 use super::Amount;
+use serde::{Deserialize, Deserializer};
 
 // Make these types easily swappable.
 pub type ClientId = u16;
@@ -8,8 +9,7 @@ pub type TransactionId = u32;
 // Option<Amount> field instead) is a bit overkill, but in the case that more event types need to be
 // handled -- ones that do not have as similar a structure to the existing ones, using an enum will
 // be more future-proof, requiring less refactoring.
-#[derive(Debug, Clone, Copy, serde::Deserialize)]
-#[serde(tag = "type")]
+#[derive(Debug, Clone, Copy)]
 pub enum Event {
     Deposit {
         client: ClientId,
@@ -61,6 +61,50 @@ impl Event {
             Self::Deposit { amount, .. } => Some(*amount),
             Self::Withdrawal { amount, .. } => Some(*amount),
             _ => None,
+        }
+    }
+}
+
+// serde doesn't support deserializing tagged enums from csv, so we have to do it manually.
+impl<'de> Deserialize<'de> for Event {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        #[derive(Deserialize)]
+        struct EventData {
+            r#type: String,
+            client: ClientId,
+            tx: TransactionId,
+            amount: Option<Amount>,
+        }
+
+        let data = EventData::deserialize(deserializer)?;
+
+        match data.r#type.as_str() {
+            "deposit" => Ok(Self::Deposit {
+                client: data.client,
+                tx: data.tx,
+                amount: data.amount.unwrap(),
+            }),
+            "withdrawal" => Ok(Self::Withdrawal {
+                client: data.client,
+                tx: data.tx,
+                amount: data.amount.unwrap(),
+            }),
+            "dispute" => Ok(Self::Dispute {
+                client: data.client,
+                tx: data.tx,
+            }),
+            "resolve" => Ok(Self::Resolve {
+                client: data.client,
+                tx: data.tx,
+            }),
+            "chargeback" => Ok(Self::Chargeback {
+                client: data.client,
+                tx: data.tx,
+            }),
+            _ => Err(serde::de::Error::custom("invalid event type")),
         }
     }
 }
