@@ -1,4 +1,4 @@
-use crate::model::{Account, Amount, AmountOpError, Event};
+use super::{Account, Amount, AmountOpError, Event};
 
 #[derive(Default, Debug, Clone, Copy)]
 pub struct Transaction {
@@ -41,6 +41,14 @@ impl Transaction {
                 let new_amount = amount;
                 account.deposit(amount)?;
 
+                if self.disputed && !self.resolved {
+                    if self.chargebacked {
+                        account.chargeback(new_amount, false)?;
+                    } else {
+                        account.hold(new_amount)?;
+                    }
+                }
+
                 self.amount = Some(new_amount);
             }
             Event::Withdrawal { amount, .. } => {
@@ -51,15 +59,50 @@ impl Transaction {
                 }
 
                 let new_amount = (-amount)?;
-                account.withdraw(amount)?;
+                if !self.chargebacked {
+                    account.withdraw(amount)?;
+                }
+
+                if self.disputed && !self.resolved {
+                    if self.chargebacked {
+                        account.chargeback(new_amount, false)?;
+                    } else {
+                        account.hold(new_amount)?;
+                    }
+                }
 
                 self.amount = Some(new_amount);
             }
-            Event::Dispute { .. } => self.disputed = true,
-            Event::Resolve { .. } => self.resolved = true,
+            Event::Dispute { .. } => {
+                self.disputed = true;
+
+                if let Some(amount) = self.amount {
+                    match (self.resolved, self.chargebacked) {
+                        (false, false) => account.hold(amount)?,
+                        (true, false) => account.release(amount)?,
+                        (_, true) => account.chargeback(amount, false)?,
+                    }
+                }
+            }
+            Event::Resolve { .. } => {
+                self.resolved = true;
+
+                if let Some(amount) = self.amount {
+                    match (self.disputed, self.chargebacked) {
+                        (true, false) => account.release(amount)?,
+                        _ => {}
+                    }
+                }
+            }
             Event::Chargeback { .. } => {
                 self.chargebacked = true;
-                account.lock();
+
+                if let Some(amount) = self.amount {
+                    match (self.disputed, self.resolved) {
+                        (true, false) => account.chargeback(amount, true)?,
+                        _ => {}
+                    }
+                }
             }
         }
 

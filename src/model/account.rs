@@ -77,4 +77,25 @@ impl Account {
             Err(e) => Err(e),
         }
     }
+
+    pub fn chargeback(&mut self, amount: Amount, held: bool) -> Result<(), AmountOpError> {
+        self.lock();
+
+        match (
+            self.total - amount,
+            if held {
+                self.held - amount
+            } else {
+                Ok(self.held)
+            },
+        ) {
+            (Ok(new_total), Ok(new_held)) => {
+                self.total = new_total;
+                self.held = new_held;
+                Ok(())
+            }
+            (Err(e), _) => Err(e),
+            (_, Err(e)) => Err(e),
+        }
+    }
 }

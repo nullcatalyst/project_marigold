@@ -1,6 +1,6 @@
 use crate::{Account, AmountOpError, ClientId, Event, Output, Transaction, TransactionId};
 use std::{
-    collections::HashMap,
+    collections::{BinaryHeap, HashMap},
     fmt::{Display, Formatter, Result as FmtResult},
     rc::Rc,
 };
@@ -63,6 +63,24 @@ impl Shard {
                 locked: account.is_locked(),
             })
             .collect()
+    }
+
+    pub fn generate_output_sorted(&self) -> Vec<Output> {
+        self.accounts
+            .iter()
+            .map(|(client, account)| Output {
+                client: *client,
+                available: account.available(),
+                held: account.held(),
+                total: account.total(),
+                locked: account.is_locked(),
+            })
+            .collect::<BinaryHeap<Output>>()
+            .into_sorted_vec()
+    }
+
+    pub fn reconcile(&mut self, _other: &Self) {
+        todo!();
     }
 }
 
