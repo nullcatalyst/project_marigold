@@ -43,7 +43,7 @@ times. (Note: The reconciliation code for the shards is not implemented at this 
 NOTE: Because of the use of sharding, the assumption that specific events will come in a known order
 (eg: Deposit -> Dispute -> Chargeback) has to be thrown out. Transactions that are flagged as being
 disputed prior to receiving the amount of the deposit, will be pre-emptively flagged, and will be
-properly handled when all information arrives. This may mean lead to unexpected results if you are
+properly handled when all information arrives. This may lead to unexpected results if you are
 expecting early dispute events to be ignored.
 
 ### Data Management
@@ -61,15 +61,15 @@ This includes any event that would cause integer overflow.
 
 Ideally this would instead send a notification or email somewhere (or even better send the event to
 a Pub/Sub so that it can be listened for by other systems), but that is again beyond the scope of
-this small project. In any form, the idea is that this should allow for the event to be manually so
-that it can be manually handled later if needed.
+this small project. In any form, the idea is that this should allow for the event to be manually
+handled later if needed.
 
 ### Folder Layout
 
 - `src` contains the rust source files. Pretty standard.
 - `data` stores a set of sample test files. The file names should be formated like
   `<test_name>.test.csv` and `<test_name>.want.csv` (making sure that the file names match). These
-  file names correspend to tests written at the bottom of `src/main.rs`. The file name starting with
-  `##_` is not strictly required, but is nice that it sort of keeps them relatively organized.
+  file names correspend to tests written at the bottom of `src/main.rs`. It is not strictly required
+  that the file names start with `##_`, but is nice that it sort of keeps them relatively organized.
 - `deps` has a local dependency, specifically `csv_test_proc` which is a custom library that makes
   it easy to define a test that reads the test data `*.csv` file, as mentioned in the point above.
