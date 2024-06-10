@@ -74,10 +74,15 @@ fn export_csv<W: std::io::Write>(shard: &Shard, writer: &mut W) {
     csv_writer.flush().unwrap();
 }
 
-    {
-        // Print any errors that occurred during processing.
-        shard.errors().iter().for_each(|err| {
-            eprintln!("{}", err);
-        });
-    }
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use csv_test_proc::csv_test;
+
+    csv_test!("1_simple");
+    csv_test!("2_reorder_headings");
+    csv_test!("3_invalid_rows");
+    csv_test!("4_overflow");
+    csv_test!("5_hold");
+    csv_test!("6_chargeback");
 }

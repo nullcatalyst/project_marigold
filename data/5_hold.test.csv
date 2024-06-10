@@ -1,0 +1,6 @@
+tx, type, client, amount
+1, deposit, 1, 100.0
+1, dispute, 1,
+2, deposit, 2, 100.0
+3, withdrawal, 2, 90.0
+3, dispute, 2,

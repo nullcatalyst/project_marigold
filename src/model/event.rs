@@ -85,12 +85,18 @@ impl<'de> Deserialize<'de> for Event {
             "deposit" => Ok(Self::Deposit {
                 client: data.client,
                 tx: data.tx,
-                amount: data.amount.unwrap(),
+                amount: data.amount.map_or_else(
+                    || Err(serde::de::Error::custom("missing required field: amount")),
+                    |value| Ok(value),
+                )?,
             }),
             "withdrawal" => Ok(Self::Withdrawal {
                 client: data.client,
                 tx: data.tx,
-                amount: data.amount.unwrap(),
+                amount: data.amount.map_or_else(
+                    || Err(serde::de::Error::custom("missing required field: amount")),
+                    |value| Ok(value),
+                )?,
             }),
             "dispute" => Ok(Self::Dispute {
                 client: data.client,

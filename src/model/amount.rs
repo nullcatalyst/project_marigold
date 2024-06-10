@@ -33,7 +33,9 @@ impl Amount {
             return None;
         }
 
-        let frac: Result<u64, _> = parts.next().map_or(Ok(0), |s| s.parse());
+        let frac: Result<u64, _> = parts
+            .next()
+            .map_or(Ok(0), |s| format!("{}0000", s)[0..4].parse());
         if frac.is_err() {
             return None;
         }
@@ -155,6 +157,7 @@ mod tests {
         assert_eq!(Amount::from_str("0"), Some(Amount(0))); // zero
         assert_eq!(Amount::from_str("123"), Some(Amount(123_0000))); // simple int
         assert_eq!(Amount::from_str("456.7891"), Some(Amount(456_7891))); // simple float
+        assert_eq!(Amount::from_str("1.5"), Some(Amount(1_5000))); // less than 4 decimal places
         assert_eq!(Amount::from_str("-987"), Some(Amount(-987_0000))); // simple negative
         assert_eq!(Amount::from_str("-1000.0001"), Some(Amount(-1000_0001))); // simple negative float
         assert_eq!(Amount::from_str("-0.0001"), Some(Amount(-0_0001))); // negative isn't lost, when integer part is zero

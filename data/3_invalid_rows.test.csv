@@ -1,0 +1,5 @@
+tx, type, client, amount
+1, take, 1, 100.0
+_, deposit, 2, 1.0
+3, deposit, _, 1.0
+4, deposit, 1, 922337203685477.5808

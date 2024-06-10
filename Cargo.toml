@@ -6,3 +6,6 @@ edition = "2021"
 [dependencies]
 csv = "1.3.0"
 serde = { version="1.0.203", features=["std", "derive"] }
+
+[dev-dependencies]
+csv_test_proc = { path = "./deps/csv_test_proc" }

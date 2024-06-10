@@ -1,0 +1,6 @@
+tx, type, client, amount
+1, deposit, 1, 922337203685477.5807
+2, deposit, 1, 0.001
+3, withdrawal, 2, 922337203685477.5807
+4, withdrawal, 2, 0.0001
+5, withdrawal, 2, 0.0001

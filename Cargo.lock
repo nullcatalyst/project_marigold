@@ -24,6 +24,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "csv_test_proc"
+version = "0.1.0"
+dependencies = [
+ "syn",
+]
+
+[[package]]
 name = "itoa"
 version = "1.0.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -95,6 +102,7 @@ name = "txn"
 version = "0.1.0"
 dependencies = [
  "csv",
+ "csv_test_proc",
  "serde",
 ]
 
