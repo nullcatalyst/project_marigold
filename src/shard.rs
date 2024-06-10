@@ -1,4 +1,4 @@
-use crate::{Account, AmountOpError, ClientId, Event, Output, Transaction, TransactionId};
+use crate::{Account, AmountOpError, ClientId, Event, Summary, Transaction, TransactionId};
 use std::{
     collections::{BinaryHeap, HashMap},
     fmt::{Display, Formatter, Result as FmtResult},
@@ -52,10 +52,10 @@ impl Shard {
         self.errors.push(err);
     }
 
-    pub fn generate_output(&self) -> Vec<Output> {
+    pub fn generate_output(&self) -> Vec<Summary> {
         self.accounts
             .iter()
-            .map(|(client, account)| Output {
+            .map(|(client, account)| Summary {
                 client: *client,
                 available: account.available(),
                 held: account.held(),
@@ -65,17 +65,17 @@ impl Shard {
             .collect()
     }
 
-    pub fn generate_output_sorted(&self) -> Vec<Output> {
+    pub fn generate_output_sorted(&self) -> Vec<Summary> {
         self.accounts
             .iter()
-            .map(|(client, account)| Output {
+            .map(|(client, account)| Summary {
                 client: *client,
                 available: account.available(),
                 held: account.held(),
                 total: account.total(),
                 locked: account.is_locked(),
             })
-            .collect::<BinaryHeap<Output>>()
+            .collect::<BinaryHeap<Summary>>()
             .into_sorted_vec()
     }
 
